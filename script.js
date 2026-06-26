@@ -152,15 +152,20 @@ async function startCamera() {
     });
 
     video.srcObject = stream;
-    cameraStatus.textContent = "CAM ON";
 
-    startBtn.style.display = "none";
-    sessionActions.style.display = "grid";
+video.onloadedmetadata = () => {
+  video.play();
+  startLivePreview();
+};
 
-    applyVideoFilter();
-    setupPeaceDetection();
-    startLivePreview();
-    updateStatus();
+cameraStatus.textContent = "CAM ON";
+
+startBtn.style.display = "none";
+sessionActions.style.display = "grid";
+
+applyVideoFilter();
+setupPeaceDetection();
+updateStatus();
   } catch (error) {
     alert("Kamera gagal dibuka. Izinkan akses kamera dulu.");
   }
@@ -491,11 +496,55 @@ async function renderPreview(showLive = false) {
     }
   }
 
-  if (showLive && stream && photos.length < getLayout().photoCount) {
+  function drawVideoToArea(ctx, videoEl, area, edit) {
+  if (!videoEl.videoWidth || !videoEl.videoHeight) return;
+
+  const ratio =
+    Math.max(area.w / videoEl.videoWidth, area.h / videoEl.videoHeight) *
+    edit.scale;
+
+  const drawW = videoEl.videoWidth * ratio;
+  const drawH = videoEl.videoHeight * ratio;
+
+  ctx.save();
+
+  ctx.beginPath();
+  ctx.rect(area.x, area.y, area.w, area.h);
+  ctx.clip();
+
+  ctx.translate(
+    area.x + area.w / 2 + edit.x,
+    area.y + area.h / 2 + edit.y
+  );
+
+  if (CONFIG.mirror) {
+    ctx.scale(-1, 1);
+  }
+
+  ctx.rotate((edit.rotate * Math.PI) / 180);
+  ctx.filter = getCanvasFilter();
+
+  ctx.drawImage(
+    videoEl,
+    -drawW / 2,
+    -drawH / 2,
+    drawW,
+    drawH
+  );
+
+  ctx.restore();
+}
+
+  if (
+  showLive &&
+  stream &&
+  video.readyState >= 2 &&
+  photos.length < getLayout().photoCount
+) {
   const liveIndex = photos.length;
 
   if (areas[liveIndex]) {
-    drawPhotoToArea(ctx, video, areas[liveIndex], getDefaultEdit());
+    drawVideoToArea(ctx, video, areas[liveIndex], getDefaultEdit());
   }
 }
 
@@ -803,10 +852,12 @@ function resetActiveEdit() {
 }
 
 function startLivePreview() {
-  if (livePreviewLoop) cancelAnimationFrame(livePreviewLoop);
+  if (livePreviewLoop) {
+    cancelAnimationFrame(livePreviewLoop);
+  }
 
-  const loop = async () => {
-    await renderPreview(true);
+  const loop = () => {
+    renderPreview(true);
     livePreviewLoop = requestAnimationFrame(loop);
   };
 
