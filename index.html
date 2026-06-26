@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Neo Photobooth v3</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="app">
+    <section class="panel camera-panel">
+      <div class="topbar">
+        <div>
+          <h1>SIMPLEBOOTH</h1>
+          <p class="tagline">make it simple.</p>
+        </div>
+        <div class="badge" id="cameraStatus">CAM OFF</div>
+      </div>
+
+      <div class="camera-box">
+        <video id="video" autoplay playsinline muted></video>
+        <div class="countdown" id="countdown">3</div>
+        <div class="flash" id="flash"></div>
+      </div>
+
+      <div class="camera-actions">
+        <button id="startBtn" class="blue">MULAI KAMERA</button>
+        <div class="session-actions" id="sessionActions">
+          <button id="captureBtn" class="pink">CAPTURE</button>
+          <button id="peaceBtn" class="green">PEACE AUTO ✓</button>
+        </div>
+        <div class="complete" id="completeBox">✓ SESSION COMPLETE</div>
+      </div>
+
+      <div class="progress" id="photoProgress"></div>
+    </section>
+
+    <section class="panel preview-panel">
+      <h2>PREVIEW</h2>
+      <div class="preview-wrap">
+        <canvas id="previewCanvas"></canvas>
+      </div>
+      <button id="downloadBtn" class="yellow download-btn">DOWNLOAD PNG</button>
+    </section>
+
+    <section class="panel control-panel">
+      <h2>CONTROL</h2>
+
+      <label>Layout</label>
+      <select id="layoutSelect"></select>
+
+      <label>Template</label>
+      <select id="templateSelect"></select>
+
+      <label>Filter</label>
+      <select id="filterSelect">
+        <option value="none">Normal</option>
+        <option value="bw">Black White</option>
+        <option value="warm">Warm</option>
+        <option value="pop">Pop Color</option>
+        <option value="soft">Soft Korean</option>
+      </select>
+
+      <div class="control-row">
+        <button id="retakeBtn" class="red">RETAKE</button>
+        <button id="resetBtn" class="red">RESET</button>
+      </div>
+
+      <div class="editor-tools">
+        <button id="zoomInBtn">ZOOM +</button>
+        <button id="zoomOutBtn">ZOOM -</button>
+        <button id="rotateBtn">ROTATE</button>
+        <button id="resetEditBtn">RESET FRAME</button>
+      </div>
+
+      <div class="status-box" id="statusBox"></div>
+
+      <p class="note">
+        Template PNG taruh di <b>assets/templates/</b>. Area foto wajib warna <b>#00FFFF</b>.
+      </p>
+    </section>
+  </main>
+
+  <canvas id="captureCanvas" hidden></canvas>
+  <canvas id="detectCanvas" hidden></canvas>
+
+  <script src="config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
