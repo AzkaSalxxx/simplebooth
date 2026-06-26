@@ -268,8 +268,8 @@ async function loadTemplate(id) {
   templateImage = await loadImage(currentTemplate.file);
 
   photoAreas = templateImage
-    ? detectMarkerAreas(templateImage, getLayout().width, getLayout().height)
-    : generateFallbackAreas();
+  ? detectMarkerAreas(templateImage, templateImage.naturalWidth, templateImage.naturalHeight)
+  : generateFallbackAreas();
 
   if (photoAreas.length < getLayout().photoCount) {
     photoAreas = generateFallbackAreas();
@@ -462,21 +462,23 @@ function generateFallbackAreas() {
 }
 
 async function renderPreview() {
-  const layout = getLayout();
   const ctx = previewCanvas.getContext("2d");
 
-  previewCanvas.width = layout.width;
-  previewCanvas.height = layout.height;
+  const canvasWidth = templateImage ? templateImage.naturalWidth : getLayout().width;
+  const canvasHeight = templateImage ? templateImage.naturalHeight : getLayout().height;
 
-  ctx.clearRect(0, 0, layout.width, layout.height);
+  previewCanvas.width = canvasWidth;
+  previewCanvas.height = canvasHeight;
+
+  ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
   const areas = photoAreas.length ? photoAreas : generateFallbackAreas();
 
   ctx.fillStyle = "#fff";
-  ctx.fillRect(0, 0, layout.width, layout.height);
+  ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
   if (!templateImage) {
-    drawDefaultTemplate(ctx, layout, areas);
+    drawDefaultTemplate(ctx, getLayout(), areas);
   }
 
   for (let i = 0; i < photos.length; i++) {
@@ -488,7 +490,7 @@ async function renderPreview() {
   }
 
   if (templateImage) {
-    drawTemplateWithoutMarkers(ctx, templateImage, layout.width, layout.height);
+    drawTemplateWithoutMarkers(ctx, templateImage, canvasWidth, canvasHeight);
   }
 
   updateStatus();
