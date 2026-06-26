@@ -42,6 +42,7 @@ let peaceReady = false;
 let activeFrame = 0;
 let dragging = false;
 let lastPointer = null;
+let livePreviewLoop = null;
 
 init();
 
@@ -158,6 +159,7 @@ async function startCamera() {
 
     applyVideoFilter();
     setupPeaceDetection();
+    startLivePreview();
     updateStatus();
   } catch (error) {
     alert("Kamera gagal dibuka. Izinkan akses kamera dulu.");
@@ -461,7 +463,7 @@ function generateFallbackAreas() {
   return [];
 }
 
-async function renderPreview() {
+async function renderPreview(showLive = false) {
   const ctx = previewCanvas.getContext("2d");
 
   const canvasWidth = templateImage ? templateImage.naturalWidth : getLayout().width;
@@ -488,6 +490,14 @@ async function renderPreview() {
       drawPhotoToArea(ctx, img, areas[i], edits[i] || getDefaultEdit());
     }
   }
+
+  if (showLive && stream && photos.length < getLayout().photoCount) {
+  const liveIndex = photos.length;
+
+  if (areas[liveIndex]) {
+    drawPhotoToArea(ctx, video, areas[liveIndex], getDefaultEdit());
+  }
+}
 
   if (templateImage) {
     drawTemplateWithoutMarkers(ctx, templateImage, canvasWidth, canvasHeight);
@@ -790,4 +800,15 @@ function resetActiveEdit() {
   edits[activeFrame] = getDefaultEdit();
 
   renderPreview();
+}
+
+function startLivePreview() {
+  if (livePreviewLoop) cancelAnimationFrame(livePreviewLoop);
+
+  const loop = async () => {
+    await renderPreview(true);
+    livePreviewLoop = requestAnimationFrame(loop);
+  };
+
+  loop();
 }
