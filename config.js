@@ -24,6 +24,7 @@ const CONFIG={
     {id:"default-6",name:"Default 6",layout:"6",file:""},
     {id:"default-4v2",name:"Default 4V2",layout:"4v2",file:""},
     {id:"default-6v2",name:"Default 6V2",layout:"6v2",file:""},
-    {id:"cute",name:"Cute Template",layout:"4",file:"assets/templates/cute.png"}
+    {id:"cute",name:"Cute Template",layout:"4",file:"assets/templates/cute.png"},
+    {id:"01",name:"01",layout:"3",file:"assets/templates/01.png"},
   ]
 };
