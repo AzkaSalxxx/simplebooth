@@ -201,6 +201,7 @@ async function capturePhoto(fromPeace = false) {
 
   photos.push(captureCanvas.toDataURL("image/png", CONFIG.quality));
   edits.push({ x: 0, y: 0, scale: 1, rotate: 0 });
+  renderPreview(true);
 
   activeFrame = photos.length - 1;
 
@@ -856,10 +857,18 @@ function startLivePreview() {
     cancelAnimationFrame(livePreviewLoop);
   }
 
-  const loop = () => {
-    renderPreview(true);
+  let lastRender = 0;
+  const fps = 15;
+  const interval = 1000 / fps;
+
+  const loop = (time) => {
+    if (time - lastRender >= interval) {
+      renderPreview(true);
+      lastRender = time;
+    }
+
     livePreviewLoop = requestAnimationFrame(loop);
   };
 
-  loop();
+  livePreviewLoop = requestAnimationFrame(loop);
 }
