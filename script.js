@@ -42,7 +42,6 @@ let peaceReady = false;
 let activeFrame = 0;
 let dragging = false;
 let lastPointer = null;
-let livePreviewLoop = null;
 
 init();
 
@@ -151,12 +150,7 @@ async function startCamera() {
       audio: false
     });
 
-    video.srcObject = stream;
-
-video.onloadedmetadata = () => {
-  video.play();
-  startLivePreview();
-};
+video.srcObject = stream;
 
 cameraStatus.textContent = "CAM ON";
 
@@ -201,7 +195,6 @@ async function capturePhoto(fromPeace = false) {
 
   photos.push(captureCanvas.toDataURL("image/png", CONFIG.quality));
   edits.push({ x: 0, y: 0, scale: 1, rotate: 0 });
-  renderPreview(true);
 
   activeFrame = photos.length - 1;
 
@@ -469,7 +462,7 @@ function generateFallbackAreas() {
   return [];
 }
 
-async function renderPreview(showLive = false) {
+async function renderPreview() {
   const ctx = previewCanvas.getContext("2d");
 
   const canvasWidth = templateImage ? templateImage.naturalWidth : getLayout().width;
@@ -496,58 +489,6 @@ async function renderPreview(showLive = false) {
       drawPhotoToArea(ctx, img, areas[i], edits[i] || getDefaultEdit());
     }
   }
-
-  function drawVideoToArea(ctx, videoEl, area, edit) {
-  if (!videoEl.videoWidth || !videoEl.videoHeight) return;
-
-  const ratio =
-    Math.max(area.w / videoEl.videoWidth, area.h / videoEl.videoHeight) *
-    edit.scale;
-
-  const drawW = videoEl.videoWidth * ratio;
-  const drawH = videoEl.videoHeight * ratio;
-
-  ctx.save();
-
-  ctx.beginPath();
-  ctx.rect(area.x, area.y, area.w, area.h);
-  ctx.clip();
-
-  ctx.translate(
-    area.x + area.w / 2 + edit.x,
-    area.y + area.h / 2 + edit.y
-  );
-
-  if (CONFIG.mirror) {
-    ctx.scale(-1, 1);
-  }
-
-  ctx.rotate((edit.rotate * Math.PI) / 180);
-  ctx.filter = getCanvasFilter();
-
-  ctx.drawImage(
-    videoEl,
-    -drawW / 2,
-    -drawH / 2,
-    drawW,
-    drawH
-  );
-
-  ctx.restore();
-}
-
-  if (
-  showLive &&
-  stream &&
-  video.readyState >= 2 &&
-  photos.length < getLayout().photoCount
-) {
-  const liveIndex = photos.length;
-
-  if (areas[liveIndex]) {
-    drawVideoToArea(ctx, video, areas[liveIndex], getDefaultEdit());
-  }
-}
 
   if (templateImage) {
     drawTemplateWithoutMarkers(ctx, templateImage, canvasWidth, canvasHeight);
@@ -852,23 +793,4 @@ function resetActiveEdit() {
   renderPreview();
 }
 
-function startLivePreview() {
-  if (livePreviewLoop) {
-    cancelAnimationFrame(livePreviewLoop);
-  }
 
-  let lastRender = 0;
-  const fps = 15;
-  const interval = 1000 / fps;
-
-  const loop = (time) => {
-    if (time - lastRender >= interval) {
-      renderPreview(true);
-      lastRender = time;
-    }
-
-    livePreviewLoop = requestAnimationFrame(loop);
-  };
-
-  livePreviewLoop = requestAnimationFrame(loop);
-}
