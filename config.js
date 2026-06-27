@@ -18,7 +18,7 @@ const CONFIG={
     "6v2":{name:"Strip 6V2",photoCount:6,width:1200,height:2200}
   },
   templates:[
-    {id:"default-2",name:"Default 2",layout:"2",file:""},
+    {id:"default-2",name:"Default 2",layout:"2",file:"assets/templates/default-2.png"},
     {id:"default-3",name:"Default 3",layout:"3",file:""},
     {id:"default-4",name:"Default 4",layout:"4",file:""},
     {id:"default-6",name:"Default 6",layout:"6",file:""},
