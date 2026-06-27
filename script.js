@@ -96,10 +96,14 @@ function bindEvents() {
     renderPreview();
   };
 
-  previewCanvas.addEventListener("pointerdown", startDrag);
-  previewCanvas.addEventListener("pointermove", moveDrag);
-  previewCanvas.addEventListener("pointerup", endDrag);
-  previewCanvas.addEventListener("pointerleave", endDrag);
+  const isDesktop = window.matchMedia("(pointer:fine)").matches;
+
+if (isDesktop) {
+    previewCanvas.addEventListener("pointerdown", startDrag);
+    previewCanvas.addEventListener("pointermove", moveDrag);
+    previewCanvas.addEventListener("pointerup", endDrag);
+    previewCanvas.addEventListener("pointerleave", endDrag);
+}
   previewCanvas.addEventListener("wheel", wheelZoom, { passive: false });
 }
 
