@@ -671,8 +671,7 @@ function updateStatus() {
     <b>${photos.length}</b> / <b>${layout.photoCount}</b><br><br>
     Peace<br>
     <b>${peaceEnabled ? "ON" : "OFF"}</b><br><br>
-    Camera<br>
-    <b>${stream ? "CONNECTED" : "OFF"}</b>
+    Camera<br><b>${stream ? "CONNECTED" : "OFF"}</b>
   `;
 
   photoProgress.innerHTML = "";
