@@ -1,26 +1,13 @@
-// Variabel global agar bisa diakses oleh seluruh fungsi di script.js
+// ==========================================
+// 1. Variabel Global & Helper
+// ==========================================
 let CONFIG = {};
 
-async function loadAppConfig() {
-  try {
-    const response = await fetch('/api/config');
-    CONFIG = await response.json();
-    
-    // Panggil fungsi inisiasi awal aplikasi lu di sini
-    // (Misalnya fungsi yang nge-load dropdown template, init kamera, dll)
-    // Contoh:
-    // initUI();
-    // startCamera();
-
-  } catch (error) {
-    console.error("Gagal memuat konfigurasi dari server:", error);
-  }
-}
-
-// Jalankan fetch config saat halaman dimuat
-loadAppConfig();
 const $ = (id) => document.getElementById(id);
 
+// ==========================================
+// 2. Deklarasi Elemen DOM
+// ==========================================
 const video = $("video");
 const layoutSelect = $("layoutSelect");
 const templateSelect = $("templateSelect");
@@ -50,13 +37,16 @@ const completeBox = $("completeBox");
 const photoProgress = $("photoProgress");
 const flash = $("flash");
 
+// ==========================================
+// 3. Deklarasi State Aplikasi
+// ==========================================
 let stream = null;
 let photos = [];
 let edits = [];
 let templateImage = null;
 let currentTemplate = null;
 let photoAreas = [];
-let peaceEnabled = CONFIG.peaceCapture;
+let peaceEnabled = false; // Nilai aslinya akan di-set setelah CONFIG terisi
 let lastPeaceCapture = 0;
 let isCapturing = false;
 let peaceReady = false;
@@ -64,8 +54,32 @@ let activeFrame = 0;
 let dragging = false;
 let lastPointer = null;
 
-init();
+// ==========================================
+// 4. Fetch Konfigurasi & Inisiasi
+// ==========================================
+async function loadAppConfig() {
+  try {
+    const response = await fetch('/api/config');
+    CONFIG = await response.json();
+    
+    // Setel variabel yang membutuhkan data CONFIG
+    peaceEnabled = CONFIG.peaceCapture;
+    
+    // Mulai inisiasi UI setelah data terisi penuh
+    init();
 
+  } catch (error) {
+    console.error("Gagal memuat konfigurasi dari server:", error);
+    statusBox.innerHTML = "<span style='color:red;'>Error memuat server config.</span>";
+  }
+}
+
+// Jalankan fetch saat script pertama dimuat
+loadAppConfig();
+
+// ==========================================
+// 5. Logika Aplikasi (Fungsi Utama)
+// ==========================================
 function init() {
   renderLayoutOptions();
   layoutSelect.value = CONFIG.defaultLayout;
@@ -119,12 +133,12 @@ function bindEvents() {
 
   const isDesktop = window.matchMedia("(pointer:fine)").matches;
 
-if (isDesktop) {
+  if (isDesktop) {
     previewCanvas.addEventListener("pointerdown", startDrag);
     previewCanvas.addEventListener("pointermove", moveDrag);
     previewCanvas.addEventListener("pointerup", endDrag);
     previewCanvas.addEventListener("pointerleave", endDrag);
-}
+  }
   previewCanvas.addEventListener("wheel", wheelZoom, { passive: false });
 }
 
@@ -141,7 +155,6 @@ function renderLayoutOptions() {
 
 function renderTemplateOptions() {
   const layoutId = layoutSelect.value;
-
   templateSelect.innerHTML = "";
 
   CONFIG.templates
@@ -175,16 +188,15 @@ async function startCamera() {
       audio: false
     });
 
-video.srcObject = stream;
+    video.srcObject = stream;
+    cameraStatus.textContent = "CAM ON";
+    
+    startBtn.style.display = "none";
+    sessionActions.style.display = "grid";
 
-cameraStatus.textContent = "CAM ON";
-
-startBtn.style.display = "none";
-sessionActions.style.display = "grid";
-
-applyVideoFilter();
-setupPeaceDetection();
-updateStatus();
+    applyVideoFilter();
+    setupPeaceDetection();
+    updateStatus();
   } catch (error) {
     alert("Kamera gagal dibuka. Izinkan akses kamera dulu.");
   }
@@ -201,7 +213,6 @@ async function capturePhoto(fromPeace = false) {
   if (photos.length >= layout.photoCount || isCapturing) return;
 
   isCapturing = true;
-
   await runCountdown();
 
   flash.classList.remove("active");
@@ -212,7 +223,6 @@ async function capturePhoto(fromPeace = false) {
   captureCanvas.height = video.videoHeight;
 
   const ctx = captureCanvas.getContext("2d");
-
   ctx.save();
   ctx.filter = getCanvasFilter();
   ctx.drawImage(video, 0, 0, captureCanvas.width, captureCanvas.height);
@@ -232,7 +242,6 @@ async function capturePhoto(fromPeace = false) {
 function runCountdown() {
   return new Promise((resolve) => {
     let count = CONFIG.countdown;
-
     countdownEl.style.display = "grid";
     countdownEl.textContent = count;
 
@@ -255,7 +264,6 @@ function retakePhoto() {
     edits.pop();
     activeFrame = Math.max(0, photos.length - 1);
   }
-
   renderPreview();
   updateStatus();
 }
@@ -264,17 +272,14 @@ function resetAll() {
   photos = [];
   edits = [];
   activeFrame = 0;
-
   renderPreview();
   updateStatus();
 }
 
 function togglePeace() {
   peaceEnabled = !peaceEnabled;
-
   peaceBtn.textContent = peaceEnabled ? "PEACE AUTO ✓" : "PEACE AUTO OFF";
   peaceBtn.classList.toggle("peace-off", !peaceEnabled);
-
   updateStatus();
 }
 
@@ -294,8 +299,8 @@ async function loadTemplate(id) {
   templateImage = await loadImage(currentTemplate.file);
 
   photoAreas = templateImage
-  ? detectMarkerAreas(templateImage, templateImage.naturalWidth, templateImage.naturalHeight)
-  : generateFallbackAreas();
+    ? detectMarkerAreas(templateImage, templateImage.naturalWidth, templateImage.naturalHeight)
+    : generateFallbackAreas();
 
   if (photoAreas.length < getLayout().photoCount) {
     photoAreas = generateFallbackAreas();
@@ -308,10 +313,8 @@ function loadImage(src) {
 
     const img = new Image();
     img.crossOrigin = "anonymous";
-
     img.onload = () => resolve(img);
     img.onerror = () => resolve(null);
-
     img.src = src;
   });
 }
@@ -321,7 +324,6 @@ function detectMarkerAreas(img, width, height) {
   detectCanvas.height = height;
 
   const ctx = detectCanvas.getContext("2d");
-
   ctx.clearRect(0, 0, width, height);
   ctx.drawImage(img, 0, 0, width, height);
 
@@ -334,15 +336,12 @@ function detectMarkerAreas(img, width, height) {
   for (let y = 0; y < height; y += step) {
     for (let x = 0; x < width; x += step) {
       const index = y * width + x;
-
       if (visited[index]) continue;
 
       const pixelIndex = index * 4;
-
       if (!isMarkerPixel(data, pixelIndex, target)) continue;
 
       const area = flood(x, y, width, height, data, visited, target, step);
-
       if (area.w > 80 && area.h > 80) {
         areas.push(area);
       }
@@ -359,7 +358,6 @@ function detectMarkerAreas(img, width, height) {
 
 function flood(startX, startY, width, height, data, visited, target, step) {
   const queue = [[startX, startY]];
-
   let minX = startX;
   let maxX = startX;
   let minY = startY;
@@ -382,9 +380,7 @@ function flood(startX, startY, width, height, data, visited, target, step) {
       [x, y - step]
     ].forEach(([nx, ny]) => {
       if (nx < 0 || ny < 0 || nx >= width || ny >= height) return;
-
       const index = ny * width + nx;
-
       if (visited[index]) return;
 
       if (isMarkerPixel(data, index * 4, target)) {
@@ -394,12 +390,7 @@ function flood(startX, startY, width, height, data, visited, target, step) {
     });
   }
 
-  return {
-    x: minX,
-    y: minY,
-    w: maxX - minX,
-    h: maxY - minY
-  };
+  return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
 }
 
 function isMarkerPixel(data, index, target) {
@@ -412,11 +403,9 @@ function isMarkerPixel(data, index, target) {
 
 function hexToRgb(hex) {
   hex = hex.replace("#", "");
-
   if (hex.length === 3) {
     hex = hex.split("").map((char) => char + char).join("");
   }
-
   return {
     r: parseInt(hex.slice(0, 2), 16),
     g: parseInt(hex.slice(2, 4), 16),
@@ -435,7 +424,6 @@ function generateFallbackAreas() {
       { x: padding, y: 700, w: layout.width - padding * 2, h: 480 }
     ];
   }
-
   if (id === "3") {
     return [
       { x: padding, y: 120, w: layout.width - padding * 2, h: 430 },
@@ -443,7 +431,6 @@ function generateFallbackAreas() {
       { x: padding, y: 1100, w: layout.width - padding * 2, h: 430 }
     ];
   }
-
   if (id === "4") {
     return [
       { x: padding, y: 100, w: layout.width - padding * 2, h: 390 },
@@ -452,7 +439,6 @@ function generateFallbackAreas() {
       { x: padding, y: 1480, w: layout.width - padding * 2, h: 390 }
     ];
   }
-
   if (id === "6") {
     return [
       { x: padding, y: 90, w: layout.width - padding * 2, h: 330 },
@@ -463,7 +449,6 @@ function generateFallbackAreas() {
       { x: padding, y: 1990, w: layout.width - padding * 2, h: 330 }
     ];
   }
-
   if (id === "4v2") {
     return [
       { x: 90, y: 170, w: 470, h: 560 },
@@ -472,7 +457,6 @@ function generateFallbackAreas() {
       { x: 640, y: 820, w: 470, h: 560 }
     ];
   }
-
   if (id === "6v2") {
     return [
       { x: 90, y: 150, w: 470, h: 470 },
@@ -489,17 +473,14 @@ function generateFallbackAreas() {
 
 async function renderPreview() {
   const ctx = previewCanvas.getContext("2d");
-
   const canvasWidth = templateImage ? templateImage.naturalWidth : getLayout().width;
   const canvasHeight = templateImage ? templateImage.naturalHeight : getLayout().height;
 
   previewCanvas.width = canvasWidth;
   previewCanvas.height = canvasHeight;
-
   ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
   const areas = photoAreas.length ? photoAreas : generateFallbackAreas();
-
   ctx.fillStyle = "#fff";
   ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
@@ -509,7 +490,6 @@ async function renderPreview() {
 
   for (let i = 0; i < photos.length; i++) {
     const img = await loadImage(photos[i]);
-
     if (img && areas[i]) {
       drawPhotoToArea(ctx, img, areas[i], edits[i] || getDefaultEdit());
     }
@@ -528,7 +508,6 @@ function drawTemplateWithoutMarkers(ctx, img, width, height) {
   canvas.height = height;
 
   const tempCtx = canvas.getContext("2d");
-
   tempCtx.drawImage(img, 0, 0, width, height);
 
   const imageData = tempCtx.getImageData(0, 0, width, height);
@@ -586,11 +565,9 @@ function drawPhotoToArea(ctx, img, area, edit) {
   const drawH = img.height * ratio;
 
   ctx.save();
-
   ctx.beginPath();
   ctx.rect(area.x, area.y, area.w, area.h);
   ctx.clip();
-
   ctx.translate(area.x + area.w / 2 + edit.x, area.y + area.h / 2 + edit.y);
 
   if (CONFIG.mirror) {
@@ -599,27 +576,19 @@ function drawPhotoToArea(ctx, img, area, edit) {
 
   ctx.rotate((edit.rotate * Math.PI) / 180);
   ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
-
   ctx.restore();
 }
 
 function getDefaultEdit() {
-  return {
-    x: 0,
-    y: 0,
-    scale: 1,
-    rotate: 0
-  };
+  return { x: 0, y: 0, scale: 1, rotate: 0 };
 }
 
 function getCanvasFilter() {
   const value = filterSelect.value;
-
   if (value === "bw") return "grayscale(1) contrast(1.12)";
   if (value === "warm") return "sepia(.35) saturate(1.35)";
   if (value === "pop") return "contrast(1.25) saturate(1.75)";
   if (value === "soft") return "brightness(1.08) contrast(.95) saturate(1.08)";
-
   return "none";
 }
 
@@ -647,10 +616,8 @@ function setupPeaceDetection() {
     if (!peaceEnabled || isCapturing || photos.length >= getLayout().photoCount) return;
 
     const hand = results.multiHandLandmarks && results.multiHandLandmarks[0];
-
     if (hand && isPeaceSign(hand)) {
       const now = Date.now();
-
       if (now - lastPeaceCapture > CONFIG.peaceDelay) {
         lastPeaceCapture = now;
         capturePhoto(true);
@@ -680,7 +647,6 @@ function isPeaceSign(hand) {
 
 async function downloadStrip() {
   if (photos.length < getLayout().photoCount) return;
-
   await renderPreview();
 
   const link = document.createElement("a");
@@ -691,6 +657,8 @@ async function downloadStrip() {
 
 function updateStatus() {
   const layout = getLayout();
+  if(!layout) return; // Mencegah error jika belum tereksekusi penuh
+
   const done = photos.length >= layout.photoCount;
 
   statusBox.innerHTML = `
@@ -722,7 +690,6 @@ function updateStatus() {
   } else {
     completeBox.style.display = "none";
     downloadBtn.classList.add("disabled");
-
     if (stream) {
       sessionActions.style.display = "grid";
     }
@@ -736,53 +703,32 @@ function frameFromPointer(event) {
 
   const x = (event.clientX - rect.left) * scaleX;
   const y = (event.clientY - rect.top) * scaleY;
-
   const areas = photoAreas.length ? photoAreas : generateFallbackAreas();
 
   for (let i = 0; i < areas.length; i++) {
     const area = areas[i];
-
-    if (
-      x >= area.x &&
-      x <= area.x + area.w &&
-      y >= area.y &&
-      y <= area.y + area.h
-    ) {
+    if (x >= area.x && x <= area.x + area.w && y >= area.y && y <= area.y + area.h) {
       return i;
     }
   }
-
   return activeFrame;
 }
 
 function startDrag(event) {
   if (!photos.length) return;
-
   activeFrame = frameFromPointer(event);
   dragging = true;
-
-  lastPointer = {
-    x: event.clientX,
-    y: event.clientY
-  };
-
+  lastPointer = { x: event.clientX, y: event.clientY };
   previewCanvas.setPointerCapture(event.pointerId);
 }
 
 function moveDrag(event) {
   if (!dragging || !photos[activeFrame]) return;
-
   const rect = previewCanvas.getBoundingClientRect();
   const scale = previewCanvas.width / rect.width;
-
   edits[activeFrame].x += (event.clientX - lastPointer.x) * scale;
   edits[activeFrame].y += (event.clientY - lastPointer.y) * scale;
-
-  lastPointer = {
-    x: event.clientX,
-    y: event.clientY
-  };
-
+  lastPointer = { x: event.clientX, y: event.clientY };
   renderPreview();
 }
 
@@ -793,27 +739,19 @@ function endDrag() {
 
 function wheelZoom(event) {
   if (!photos[activeFrame]) return;
-
   event.preventDefault();
-
-  editFrame({
-    scale: event.deltaY < 0 ? 0.06 : -0.06
-  });
+  editFrame({ scale: event.deltaY < 0 ? 0.06 : -0.06 });
 }
 
 function editFrame({ scale = 0, rotate = 0 }) {
   if (!photos[activeFrame]) return;
-
   edits[activeFrame].scale = Math.max(0.4, edits[activeFrame].scale + scale);
   edits[activeFrame].rotate = (edits[activeFrame].rotate + rotate) % 360;
-
   renderPreview();
 }
 
 function resetActiveEdit() {
   if (!photos[activeFrame]) return;
-
   edits[activeFrame] = getDefaultEdit();
-
   renderPreview();
 }
