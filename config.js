@@ -8,7 +8,7 @@ const CONFIG={
   peaceCapture:true,
   peaceDelay:1400,
   defaultLayout:"4",
-  defaultTemplate:{"2":"f2w","3":"default-3","4":"default-4","6":"default-6","4v2":"default-4v2","6v2":"default-6v2"},
+  defaultTemplate:{"2":"f2w","3":"f3w","4":"f4w","6":"default-6","4v2":"default-4v2","6v2":"default-6v2"},
   layouts:{
     "2":{name:"Strip 2 Foto",photoCount:2,width:800,height:1500},
     "3":{name:"Strip 3 Foto",photoCount:3,width:800,height:1900},
